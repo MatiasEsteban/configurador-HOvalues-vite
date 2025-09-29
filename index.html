@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurador de HandoffValues v3.0</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Procesando...</div>
+            <div class="loading-subtext" id="loadingSubtext">Por favor espere...</div>
+            <div class="progress-bar" id="progressBar" style="display:none;">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de cambio de tema -->
+    <div class="theme-toggle" id="themeToggle">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">Modo Oscuro</span>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h1>🚀 Configurador de HandoffValues v3.0</h1>
+            
+            <!-- Carga de archivo -->
+            <div class="file-upload">
+                <label for="fileUpload">📁 Cargar archivo base (opcional):</label>
+                <input type="file" id="fileUpload" accept=".csv">
+                <small>Sube tu archivo "Intents a configurar" para revisar y editar configuraciones existentes</small>
+                <div id="fileStatus"></div>
+            </div>
+
+            <!-- Selector de modo -->
+            <div class="input-mode-selector">
+                <div class="mode-option">
+                    <input type="radio" id="singleMode" name="inputMode" value="single" checked>
+                    <label for="singleMode">📝 HandoffValue Individual</label>
+                </div>
+                <div class="mode-option">
+                    <input type="radio" id="multiMode" name="inputMode" value="multiple">
+                    <label for="multiMode">📚 Múltiples HandoffValues</label>
+                </div>
+            </div>
+
+            <!-- Entrada individual -->
+            <div id="singleInput" class="form-group">
+                <label for="handoffValue">HandoffValue:</label>
+                <input type="text" id="handoffValue" placeholder="Ingrese el HandoffValue">
+                <div class="helper-text" id="existenceCheck"></div>
+            </div>
+
+            <!-- Entrada múltiple -->
+            <div id="multipleInput" class="form-group" style="display:none;">
+                <label for="handoffValues">HandoffValues (uno por línea o separados por coma):</label>
+                <textarea id="handoffValues" placeholder="Ejemplo:&#10;valor1&#10;valor2&#10;valor3"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="campaignId">Campaign ID:</label>
+                    <div class="campaign-selector">
+                        <select id="campaignId">
+                            <option value="">Seleccione una campaña...</option>
+                            <option value="WAP_Movil_Kon-AR">WAP_Movil_Kon-AR</option>
+                            <option value="WAP_Desarrollo_Kon-AR">WAP_Desarrollo_Kon-AR</option>
+                            <option value="WAP_Prepago_Kon-AR">WAP_Prepago_Kon-AR</option>
+                            <option value="WAP_Hogar_Kon-AR">WAP_Hogar_Kon-AR</option>
+                            <option value="WAP_Movil_In_Kon-AR">WAP_Movil_In_Kon-AR</option>
+                        </select>
+                        <span class="sync-icon" id="syncWavyUser" title="Sincronizar">🔄</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="wavyUser">Wavy User:</label>
+                    <select id="wavyUser">
+                        <option value="">Seleccione un usuario...</option>
+                        <option value="WAP_Movil_Kon-AR">WAP_Movil_Kon-AR</option>
+                        <option value="WAP_Desarrollo_Kon-AR">WAP_Desarrollo_Kon-AR</option>
+                        <option value="WAP_Prepago_Kon-AR">WAP_Prepago_Kon-AR</option>
+                        <option value="WAP_Hogar_Kon-AR">WAP_Hogar_Kon-AR</option>
+                        <option value="WAP_Movil_In_Kon-AR">WAP_Movil_In_Kon-AR</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="virtualCC">Virtual CC:</label>
+                    <input type="text" id="virtualCC" value="ventas">
+                </div>
+            </div>
+
+            <div class="categorization-group">
+                <h3>📊 Categorización</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reporteCampana">Reporte Campaña:</label>
+                        <select id="reporteCampana">
+                            <option value="">Seleccione...</option>
+                            <option value="Portabilidad">Portabilidad</option>
+                            <option value="Cambio de Plan">Cambio de Plan</option>
+                            <option value="Migra Positiva">Migra Positiva</option>
+                            <option value="Linea nueva con Factura">Línea nueva con Factura</option>
+                            <option value="Linea nueva Prepago">Línea nueva Prepago</option>
+                            <option value="Compra de Equipo">Compra de Equipo</option>
+                            <option value="Internet/TV">Internet/TV</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reporteCodCampana">Reporte Código Campaña:</label>
+                        <select id="reporteCodCampana">
+                            <option value="">Seleccione...</option>
+                            <option value="Movil_Portabilidad">Móvil_Portabilidad</option>
+                            <option value="Movil_Cambio Plan">Móvil_Cambio Plan</option>
+                            <option value="Movil_Migracion">Móvil_Migración</option>
+                            <option value="Movil_Linea Nueva">Móvil_Línea Nueva</option>
+                            <option value="Movil_Linea Nueva Prepago">Móvil_Línea Nueva Prepago</option>
+                            <option value="Movil_Cambio Equipo">Móvil_Cambio Equipo</option>
+                            <option value="Fija_Alta">Fija_Alta</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reporteProducto">Reporte Producto:</label>
+                        <select id="reporteProducto">
+                            <option value="">Seleccione...</option>
+                            <option value="Fijo">Fijo</option>
+                            <option value="Movil">Móvil</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Canal (ChannelId):</label>
+                <button class="select-all-btn" id="selectAllChannels">✅ Seleccionar Todos</button>
+                <div class="channel-select" id="channelSelect">
+                    <div class="channel-option" data-channel="sales_wapp_b2c">📱 sales_wapp_b2c</div>
+                    <div class="channel-option" data-channel="wapp_comunidad">👥 wapp_comunidad</div>
+                    <div class="channel-option" data-channel="wapp_novedades_sales">📢 wapp_novedades_sales</div>
+                    <div class="channel-option" data-channel="wapp_pro">💼 wapp_pro</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="peso">Peso:</label>
+                <input type="number" id="peso" value="100" min="0" max="100" style="max-width: 100px;">
+            </div>
+
+            <div class="button-group">
+                <button id="addHandoffBtn">➕ Agregar HandoffValue(s)</button>
+                <button class="secondary" id="clearFormBtn">🔄 Limpiar</button>
+                <button class="info" id="searchBtn">🔎 Buscar</button>
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+        </div>
+
+        <div class="card">
+            <h2>📋 HandoffValues Configurados (<span id="totalCount">0</span>)</h2>
+            
+            <!-- Buscador -->
+            <div class="search-box">
+                <button class="info" id="searchHandoffBtn" style="padding: 10px 30px;">🔎 Buscar HandoffValue</button>
+                <button class="secondary" id="clearSearchBtn" style="padding: 10px 20px;">❌ Limpiar búsqueda</button>
+            </div>
+            
+            <div class="table-info">
+                <span>Total: <span id="totalRows">0</span> | Visibles: <span id="visibleRows">0</span></span>
+                <span>💡 La tabla tiene scroll para ver todos los registros</span>
+            </div>
+            
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>HandoffValue</th>
+                            <th>ChannelId</th>
+                            <th>VirtualCC</th>
+                            <th>CampaignId</th>
+                            <th>WavyUser</th>
+                            <th>Reporte_Campana</th>
+                            <th>Reporte_Producto</th>
+                            <th>Reporte_Cod_Campana</th>
+                            <th>Peso</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="button-group">
+                <button class="export-btn" id="exportCSVBtn">📥 Exportar CSV</button>
+                <button class="danger" id="clearAllBtn">🗑️ Limpiar Todo</button>
+                <button class="info" id="scrollToBottomBtn" style="background: #6c757d;">⬇️ Ir al final</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
