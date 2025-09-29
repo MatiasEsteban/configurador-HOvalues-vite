@@ -90,32 +90,27 @@ function setupEventListeners() {
         }
     });
     
-    // Event delegation para cargar configuración existente
+    // Event delegation global para botones dinámicos (load-config-btn)
+    // OPTIMIZADO: Solo se agrega UNA VEZ
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('load-config-btn')) {
             const handoffValue = e.target.dataset.handoff;
             cargarConfiguracionExistente(handoffValue);
         }
     });
-// Al final de la función setupEventListeners(), agrega:
-
-// Event delegation global para botones dinámicos
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('load-config-btn')) {
-        const handoffValue = e.target.dataset.handoff;
-        cargarConfiguracionExistente(handoffValue);
-    }
-});
 }
 
 function cambiarModoEntrada() {
     const mode = document.querySelector('input[name="inputMode"]:checked').value;
+    const singleInput = document.getElementById('singleInput');
+    const multipleInput = document.getElementById('multipleInput');
+    
     if (mode === 'single') {
-        document.getElementById('singleInput').style.display = 'block';
-        document.getElementById('multipleInput').style.display = 'none';
+        singleInput.style.display = 'block';
+        multipleInput.style.display = 'none';
     } else {
-        document.getElementById('singleInput').style.display = 'none';
-        document.getElementById('multipleInput').style.display = 'block';
+        singleInput.style.display = 'none';
+        multipleInput.style.display = 'block';
     }
 }
 

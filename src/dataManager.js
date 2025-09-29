@@ -1,11 +1,11 @@
-// Gestión de datos y lógica de negocio
+// Gestión de datos y lógica de negocio - OPTIMIZADO
 import { 
     getConfiguraciones, 
     setConfiguraciones, 
-    addConfiguraciones,
     removeConfiguracion,
     getSelectedChannels,
-    clearSelectedChannels 
+    clearSelectedChannels,
+    addSelectedChannel
 } from './state.js';
 import { MAPEO_REPORTES, MAPEO_PRODUCTO, BATCH_SIZE, LOADING_THRESHOLD } from './config.js';
 import { 
@@ -67,6 +67,7 @@ export async function agregarHandoff() {
         totalConfiguraciones: 0
     };
 
+    // OPTIMIZACIÓN: Usar Set para eliminar duplicados más eficientemente
     const valoresUnicos = [...new Set(handoffValues)];
     const duplicadosEnEntrada = handoffValues.length - valoresUnicos.length;
     
@@ -76,6 +77,7 @@ export async function agregarHandoff() {
         );
     }
     
+    // OPTIMIZACIÓN: Crear Map una sola vez para búsqueda O(1)
     const configuraciones = getConfiguraciones();
     const existentesMap = new Map();
     configuraciones.forEach(config => {
@@ -87,12 +89,14 @@ export async function agregarHandoff() {
 
     const nuevasConfiguraciones = [];
     
+    // OPTIMIZACIÓN: Procesar en batches para evitar bloquear el UI
     for (let i = 0; i < valoresUnicos.length; i += BATCH_SIZE) {
         const batch = valoresUnicos.slice(i, i + BATCH_SIZE);
         
         if (esCargaMasiva) {
             const progress = Math.round((i / valoresUnicos.length) * 100);
             updateProgress(progress);
+            // Yield para permitir que el navegador actualice el UI
             await new Promise(resolve => setTimeout(resolve, 0));
         }
         
@@ -101,12 +105,18 @@ export async function agregarHandoff() {
             
             if (existentes && existentes.length > 0) {
                 estadisticas.actualizados.push(handoffValue);
+                // Marcar para eliminar en lugar de eliminar inmediatamente
                 existentes.forEach(config => {
                     config._markedForDeletion = true;
                 });
             } else {
                 estadisticas.nuevos.push(handoffValue);
             }
+            
+            // Pre-calcular valores comunes
+            const esNuevo = !existentes || existentes.length === 0;
+            const estado = esNuevo ? 'Nuevo' : 'Editado';
+            const tipoVisual = esNuevo ? 'nuevo' : 'editado';
             
             selectedChannels.forEach(channel => {
                 const config = {
@@ -119,8 +129,8 @@ export async function agregarHandoff() {
                     Reporte_Producto: reporteProducto || 'Sin categorizar',
                     Reporte_Cod_Campana: reporteCodCampana || 'SIN-COD',
                     Peso: peso,
-                    Estado: existentes && existentes.length > 0 ? 'Editado' : 'Nuevo',
-                    TipoVisual: existentes && existentes.length > 0 ? 'editado' : 'nuevo'
+                    Estado: estado,
+                    TipoVisual: tipoVisual
                 };
                 nuevasConfiguraciones.push(config);
                 estadisticas.totalConfiguraciones++;
@@ -128,6 +138,7 @@ export async function agregarHandoff() {
         });
     }
 
+    // OPTIMIZACIÓN: Filtrar una sola vez al final
     const configsFiltradas = configuraciones.filter(c => !c._markedForDeletion);
     setConfiguraciones([...configsFiltradas, ...nuevasConfiguraciones]);
 
@@ -168,6 +179,7 @@ export function verificarExistencia() {
     
     if (configsExistentes.length > 0) {
         const canales = configsExistentes.map(c => c.ChannelId).join(', ');
+        // OPTIMIZACIÓN: Sanitizar el valor para evitar problemas con comillas
         const escapedValue = value.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         checkDiv.innerHTML = `
             <span style="color: var(--success-text);">✅ Ya existe en: ${canales}</span>
@@ -188,6 +200,7 @@ export function cargarConfiguracionExistente(handoffValue) {
     
     const config = configs[0];
     
+    // Cargar valores en el formulario
     document.getElementById('campaignId').value = config.CampaignId || '';
     document.getElementById('wavyUser').value = config.WavyUser || '';
     document.getElementById('virtualCC').value = config.VirtualCC || 'ventas';
@@ -196,16 +209,18 @@ export function cargarConfiguracionExistente(handoffValue) {
     document.getElementById('reporteProducto').value = config.Reporte_Producto || '';
     document.getElementById('peso').value = config.Peso || '100';
     
+    // Limpiar canales
     document.querySelectorAll('.channel-option').forEach(opt => opt.classList.remove('selected'));
     clearSelectedChannels();
     
-    configs.forEach(conf => {
-        document.querySelectorAll('.channel-option').forEach(opt => {
-            if (opt.dataset.channel === conf.ChannelId && !opt.classList.contains('selected')) {
-                opt.classList.add('selected');
-                opt.click();
-            }
-        });
+    // OPTIMIZACIÓN: Crear Set de canales para búsqueda más rápida
+    const canalesToSelect = new Set(configs.map(c => c.ChannelId));
+    
+    document.querySelectorAll('.channel-option').forEach(opt => {
+        if (canalesToSelect.has(opt.dataset.channel)) {
+            opt.classList.add('selected');
+            addSelectedChannel(opt.dataset.channel);
+        }
     });
     
     mostrarMensaje('✅ Configuración cargada. Puede modificar y agregar', 'success');
@@ -249,12 +264,13 @@ export function exportarCSV() {
         showLoading('Exportando', 'Generando archivo CSV...');
     }
 
+    // OPTIMIZACIÓN: Construir CSV usando array en lugar de concatenación
     const headers = 'HandoffValue;ChannelId;VirtualCC;CampaignId;WavyUser;Reporte_Campana;Reporte_Producto;Reporte_Cod_Campana;Peso';
     const rows = configuraciones.map(config => 
         `${config.HandoffValue};${config.ChannelId};${config.VirtualCC};${config.CampaignId};${config.WavyUser};${config.Reporte_Campana};${config.Reporte_Producto};${config.Reporte_Cod_Campana};${config.Peso}`
     );
     
-    const csvContent = headers + '\n' + rows.join('\n');
+    const csvContent = [headers, ...rows].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -265,6 +281,9 @@ export function exportarCSV() {
     link.download = `Intents a configurar ${dia}-${mes}.csv`;
     
     link.click();
+    
+    // OPTIMIZACIÓN: Limpiar URL después de descargar
+    setTimeout(() => URL.revokeObjectURL(link.href), 100);
     
     if (configuraciones.length > 1000) {
         hideLoading();
@@ -296,7 +315,7 @@ export function editarFila(index) {
     const channelOption = document.querySelector(`[data-channel="${config.ChannelId}"]`);
     if (channelOption) {
         channelOption.classList.add('selected');
-        channelOption.click();
+        addSelectedChannel(config.ChannelId);
     }
     
     removeConfiguracion(index);
@@ -320,15 +339,4 @@ export function limpiarTodo() {
         actualizarTabla();
         mostrarMensaje('Todas las configuraciones eliminadas', 'success');
     }
-}
-
-// Función auxiliar para manejar event listeners de botones dinámicos en existenceCheck
-export function setupDynamicListeners() {
-    // Esta función se puede llamar después de crear elementos dinámicos
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('load-config-btn')) {
-            const handoffValue = e.target.dataset.handoff;
-            cargarConfiguracionExistente(handoffValue);
-        }
-    });
 }

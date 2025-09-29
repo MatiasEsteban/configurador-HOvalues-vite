@@ -1,4 +1,4 @@
-// Funciones de interfaz de usuario
+// Funciones de interfaz de usuario - OPTIMIZADO
 import { getConfiguraciones } from './state.js';
 
 export function showLoading(text = 'Procesando', subtext = 'Por favor espere...', showProgress = false) {
@@ -39,44 +39,61 @@ export function mostrarMensaje(mensaje, tipo) {
     }, 4300);
 }
 
+// OPTIMIZACIÓN CRÍTICA: Actualización de tabla más eficiente
 export function actualizarTabla() {
     const tbody = document.getElementById('tableBody');
     const configuraciones = getConfiguraciones();
     
+    // Usar DocumentFragment para una sola manipulación DOM
     const fragment = document.createDocumentFragment();
     
+    // OPTIMIZACIÓN: Crear elementos DOM de forma eficiente
     configuraciones.forEach((config, index) => {
         const row = document.createElement('tr');
         
+        // Aplicar clases CSS según el tipo
         if (config.TipoVisual === 'nuevo') {
             row.classList.add('nuevo-registro');
         } else if (config.TipoVisual === 'editado') {
             row.classList.add('registro-editado');
         }
         
-        row.innerHTML = `
-            <td>${config.HandoffValue}</td>
-            <td>${config.ChannelId}</td>
-            <td>${config.VirtualCC}</td>
-            <td>${config.CampaignId}</td>
-            <td>${config.WavyUser}</td>
-            <td>${config.Reporte_Campana}</td>
-            <td>${config.Reporte_Producto}</td>
-            <td>${config.Reporte_Cod_Campana}</td>
-            <td>${config.Peso}</td>
-            <td>${config.Estado || 'Nuevo'}</td>
-            <td>
-                <button class="edit-btn" data-index="${index}">✏️</button>
-                <button class="delete-btn" data-index="${index}">🗑️</button>
-            </td>
+        // OPTIMIZACIÓN: Crear celdas una por una es más rápido que innerHTML para tablas grandes
+        const cells = [
+            config.HandoffValue,
+            config.ChannelId,
+            config.VirtualCC,
+            config.CampaignId,
+            config.WavyUser,
+            config.Reporte_Campana,
+            config.Reporte_Producto,
+            config.Reporte_Cod_Campana,
+            config.Peso,
+            config.Estado || 'Nuevo'
+        ];
+        
+        cells.forEach(text => {
+            const td = document.createElement('td');
+            td.textContent = text;
+            row.appendChild(td);
+        });
+        
+        // Última celda con botones de acción
+        const tdActions = document.createElement('td');
+        tdActions.innerHTML = `
+            <button class="edit-btn" data-index="${index}">✏️</button>
+            <button class="delete-btn" data-index="${index}">🗑️</button>
         `;
+        row.appendChild(tdActions);
         
         fragment.appendChild(row);
     });
     
+    // Una sola operación DOM: limpiar y agregar todo de una vez
     tbody.innerHTML = '';
     tbody.appendChild(fragment);
     
+    // Actualizar contadores
     const total = configuraciones.length;
     document.getElementById('totalCount').textContent = total;
     document.getElementById('totalRows').textContent = total;
@@ -94,35 +111,42 @@ export function mostrarPopupEstadisticas(stats, numCanales) {
     content.style.maxHeight = '80vh';
     content.style.overflow = 'auto';
     
-    let duplicadosHtml = '';
+    // OPTIMIZACIÓN: Construir HTML eficientemente
+    const parts = [];
+    
+    // Duplicados
     if (stats.duplicados.length > 0) {
         const duplicadosUnicos = [...new Set(stats.duplicados)];
-        duplicadosHtml = `
+        parts.push(`
             <div style="background: var(--warning-bg); padding: 12px; border-radius: 8px; margin: 10px 0; color: var(--warning-text);">
                 <strong>⚠️ Duplicados ignorados (${stats.duplicados.length}):</strong><br>
                 <small>${duplicadosUnicos.join(', ')}</small>
             </div>
-        `;
+        `);
     }
     
-    let nuevosHtml = '';
+    // Nuevos
     if (stats.nuevos.length > 0) {
-        nuevosHtml = `
+        const preview = stats.nuevos.slice(0, 10).join(', ');
+        const more = stats.nuevos.length > 10 ? '...' : '';
+        parts.push(`
             <div style="background: var(--success-bg); padding: 12px; border-radius: 8px; margin: 10px 0; color: var(--success-text);">
                 <strong>✅ Nuevos (${stats.nuevos.length}):</strong><br>
-                <small>${stats.nuevos.slice(0, 10).join(', ')}${stats.nuevos.length > 10 ? '...' : ''}</small>
+                <small>${preview}${more}</small>
             </div>
-        `;
+        `);
     }
     
-    let actualizadosHtml = '';
+    // Actualizados
     if (stats.actualizados.length > 0) {
-        actualizadosHtml = `
+        const preview = stats.actualizados.slice(0, 10).join(', ');
+        const more = stats.actualizados.length > 10 ? '...' : '';
+        parts.push(`
             <div style="background: var(--info-bg); padding: 12px; border-radius: 8px; margin: 10px 0; color: var(--info-text);">
                 <strong>🔄 Actualizados (${stats.actualizados.length}):</strong><br>
-                <small>${stats.actualizados.slice(0, 10).join(', ')}${stats.actualizados.length > 10 ? '...' : ''}</small>
+                <small>${preview}${more}</small>
             </div>
-        `;
+        `);
     }
     
     content.innerHTML = `
@@ -137,9 +161,7 @@ export function mostrarPopupEstadisticas(stats, numCanales) {
                 • Canales seleccionados: <strong>${numCanales}</strong><br>
                 • HandoffValues únicos procesados: <strong>${stats.nuevos.length + stats.actualizados.length}</strong>
             </div>
-            ${duplicadosHtml}
-            ${nuevosHtml}
-            ${actualizadosHtml}
+            ${parts.join('')}
         </div>
         <button class="close-popup" 
                 style="margin-top: 20px; padding: 12px 30px; background: #28a745; 
@@ -156,6 +178,7 @@ export function mostrarPopupEstadisticas(stats, numCanales) {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     
+    // Auto-cerrar después de 15 segundos
     setTimeout(() => {
         if (overlay.parentElement) {
             overlay.remove();
@@ -194,6 +217,7 @@ export function mostrarPopupNoEncontrado(termino) {
     overlay.appendChild(content);
     document.body.appendChild(overlay);
     
+    // Auto-cerrar después de 3 segundos
     setTimeout(() => {
         if (overlay.parentElement) {
             overlay.remove();
@@ -206,7 +230,9 @@ export function toggleTheme() {
     const themeIcon = document.getElementById('themeIcon');
     const themeText = document.getElementById('themeText');
     
-    if (html.getAttribute('data-theme') === 'dark') {
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    
+    if (isDark) {
         html.removeAttribute('data-theme');
         themeIcon.textContent = '🌙';
         themeText.textContent = 'Modo Oscuro';
