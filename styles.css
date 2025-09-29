@@ -107,6 +107,7 @@ body {
     font-size: 14px;
 }
 
+/* CORRECCIÓN: Botón de cambio de tema con color adaptable */
 .theme-toggle {
     position: fixed;
     top: 20px;
@@ -122,10 +123,17 @@ body {
     gap: 10px;
     box-shadow: 0 4px 10px var(--shadow);
     transition: all 0.3s ease;
+    color: var(--text-primary); /* ✅ AGREGADO: Color que se adapta al tema */
+    font-weight: 600; /* ✅ AGREGADO: Texto más visible */
 }
 
 .theme-toggle:hover {
     transform: scale(1.05);
+}
+
+/* ✅ AGREGADO: Asegurar que el texto del botón siempre use el color correcto */
+.theme-toggle #themeText {
+    color: var(--text-primary);
 }
 
 .container {
