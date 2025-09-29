@@ -94,10 +94,10 @@ export async function agregarHandoff() {
         const batch = valoresUnicos.slice(i, i + BATCH_SIZE);
         
         if (esCargaMasiva) {
-            const progress = Math.round((i / valoresUnicos.length) * 100);
+            const progress = Math.round(((i + batch.length) / valoresUnicos.length) * 100);
             updateProgress(progress);
             // Yield para permitir que el navegador actualice el UI
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
         
         batch.forEach(handoffValue => {
@@ -146,7 +146,8 @@ export async function agregarHandoff() {
         updateProgress(100);
     }
 
-    actualizarTabla();
+    // OPTIMIZACIÓN: Solo renderizar los nuevos elementos agregados
+    actualizarTabla('solo-nuevos');
     limpiarFormulario();
     
     if (esCargaMasiva) {
@@ -319,7 +320,8 @@ export function editarFila(index) {
     }
     
     removeConfiguracion(index);
-    actualizarTabla();
+    // Al editar, re-renderizar toda la tabla
+    actualizarTabla('todos');
     
     window.scrollTo({top: 0, behavior: 'smooth'});
     mostrarMensaje('Configuración cargada para editar', 'info');
@@ -328,7 +330,8 @@ export function editarFila(index) {
 export function eliminarFila(index) {
     if (confirm('¿Está seguro de eliminar esta configuración?')) {
         removeConfiguracion(index);
-        actualizarTabla();
+        // Al eliminar, re-renderizar toda la tabla
+        actualizarTabla('todos');
         mostrarMensaje('Configuración eliminada', 'success');
     }
 }
@@ -336,7 +339,8 @@ export function eliminarFila(index) {
 export function limpiarTodo() {
     if (confirm('¿Está seguro de eliminar todas las configuraciones?')) {
         setConfiguraciones([]);
-        actualizarTabla();
+        // Al limpiar todo, ocultar la tabla
+        actualizarTabla('ocultar');
         mostrarMensaje('Todas las configuraciones eliminadas', 'success');
     }
 }

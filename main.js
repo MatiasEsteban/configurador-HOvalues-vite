@@ -1,5 +1,5 @@
 // Punto de entrada principal de la aplicación
-import { initTheme, toggleTheme, actualizarTabla, mostrarPopupNoEncontrado } from './src/ui.js';
+import { initTheme, toggleTheme, actualizarTabla, mostrarPopupNoEncontrado, toggleTablaVisibilidad } from './src/ui.js';
 import { 
     agregarHandoff, 
     verificarExistencia,
@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar tema
     initTheme();
     
-    // Inicializar tabla
-    actualizarTabla();
+    // Inicializar tabla en modo oculto
+    actualizarTabla('ocultar');
     
     // Event listeners principales
     setupEventListeners();
@@ -78,6 +78,12 @@ function setupEventListeners() {
     document.getElementById('exportCSVBtn').addEventListener('click', exportarCSV);
     document.getElementById('clearAllBtn').addEventListener('click', limpiarTodo);
     document.getElementById('scrollToBottomBtn').addEventListener('click', irAlFinal);
+    
+    // Botón para mostrar/ocultar tabla
+    document.getElementById('toggleTablaBtn').addEventListener('click', function() {
+        const estaVisible = toggleTablaVisibilidad();
+        this.innerHTML = estaVisible ? '👁️ Ocultar Tabla' : '👁️ Mostrar Tabla';
+    });
     
     // Event delegation para botones dinámicos de la tabla
     document.getElementById('tableBody').addEventListener('click', function(e) {

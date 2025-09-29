@@ -1,8 +1,10 @@
-// Estado global de la aplicación
+// Estado global de la aplicación - OPTIMIZADO CON RENDERIZADO BAJO DEMANDA
 export const state = {
     configuraciones: [],
     selectedChannels: [],
-    archivoTemporal: null
+    archivoTemporal: null,
+    tablaVisible: false, // ✅ NUEVO: Controla si la tabla está renderizada
+    ultimoIndiceRenderizado: 0 // ✅ NUEVO: Para renderizado incremental
 };
 
 export function getConfiguraciones() {
@@ -11,6 +13,8 @@ export function getConfiguraciones() {
 
 export function setConfiguraciones(configs) {
     state.configuraciones = configs;
+    // Al setear configuraciones (cargar archivo), resetear índice
+    state.ultimoIndiceRenderizado = 0;
 }
 
 export function addConfiguraciones(configs) {
@@ -56,4 +60,21 @@ export function getArchivoTemporal() {
 
 export function clearArchivoTemporal() {
     state.archivoTemporal = null;
+}
+
+// ✅ NUEVAS FUNCIONES PARA CONTROL DE VISIBILIDAD
+export function isTablaVisible() {
+    return state.tablaVisible;
+}
+
+export function setTablaVisible(visible) {
+    state.tablaVisible = visible;
+}
+
+export function getUltimoIndiceRenderizado() {
+    return state.ultimoIndiceRenderizado;
+}
+
+export function setUltimoIndiceRenderizado(index) {
+    state.ultimoIndiceRenderizado = index;
 }

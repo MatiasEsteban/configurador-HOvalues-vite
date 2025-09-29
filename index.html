@@ -174,7 +174,17 @@
             
             <div class="table-info">
                 <span>Total: <span id="totalRows">0</span> | Visibles: <span id="visibleRows">0</span></span>
-                <span>💡 La tabla tiene scroll para ver todos los registros</span>
+                <span>💡 Los nuevos registros se muestran automáticamente</span>
+            </div>
+            
+            <!-- ✅ NUEVO: Botón para mostrar/ocultar toda la tabla -->
+            <div class="performance-controls">
+                <button class="warning" id="toggleTablaBtn" style="width: 100%; margin-bottom: 15px; font-size: 16px;">
+                    👁️ Mostrar Tabla
+                </button>
+                <small style="color: var(--text-secondary); display: block; text-align: center; margin-bottom: 10px;">
+                    ⚡ Por defecto solo se muestran los registros nuevos para optimizar performance
+                </small>
             </div>
             
             <div class="data-table">

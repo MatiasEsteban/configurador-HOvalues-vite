@@ -1,16 +1,33 @@
-// Funciones de interfaz de usuario - OPTIMIZADO
-import { getConfiguraciones } from './state.js';
+// Funciones de interfaz de usuario - OPTIMIZADO CON RENDERIZADO BAJO DEMANDA
+import { 
+    getConfiguraciones, 
+    isTablaVisible, 
+    setTablaVisible, 
+    getUltimoIndiceRenderizado, 
+    setUltimoIndiceRenderizado 
+} from './state.js';
 
 export function showLoading(text = 'Procesando', subtext = 'Por favor espere...', showProgress = false) {
     const overlay = document.getElementById('loadingOverlay');
     const loadingText = document.getElementById('loadingText');
     const loadingSubtext = document.getElementById('loadingSubtext');
     const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
     
     if (overlay && loadingText && loadingSubtext) {
         loadingText.textContent = text;
         loadingSubtext.textContent = subtext;
-        progressBar.style.display = showProgress ? 'block' : 'none';
+        
+        if (showProgress && progressBar && progressFill) {
+            // Resetear la barra a 0% antes de mostrarla
+            progressFill.style.width = '0%';
+            progressBar.style.display = 'block';
+            // Forzar un reflow para que el navegador registre el cambio
+            progressBar.offsetHeight;
+        } else if (progressBar) {
+            progressBar.style.display = 'none';
+        }
+        
         overlay.classList.add('active');
     }
 }
@@ -18,7 +35,10 @@ export function showLoading(text = 'Procesando', subtext = 'Por favor espere...'
 export function updateProgress(percent) {
     const progressFill = document.getElementById('progressFill');
     if (progressFill) {
-        progressFill.style.width = percent + '%';
+        // Usar requestAnimationFrame para asegurar que la actualización sea visible
+        requestAnimationFrame(() => {
+            progressFill.style.width = Math.min(100, Math.max(0, percent)) + '%';
+        });
     }
 }
 
@@ -39,65 +59,112 @@ export function mostrarMensaje(mensaje, tipo) {
     }, 4300);
 }
 
-// OPTIMIZACIÓN CRÍTICA: Actualización de tabla más eficiente
-export function actualizarTabla() {
+// OPTIMIZACIÓN CRÍTICA: Sistema de renderizado bajo demanda
+export function actualizarTabla(modo = 'solo-nuevos') {
     const tbody = document.getElementById('tableBody');
     const configuraciones = getConfiguraciones();
-    
-    // Usar DocumentFragment para una sola manipulación DOM
-    const fragment = document.createDocumentFragment();
-    
-    // OPTIMIZACIÓN: Crear elementos DOM de forma eficiente
-    configuraciones.forEach((config, index) => {
-        const row = document.createElement('tr');
-        
-        // Aplicar clases CSS según el tipo
-        if (config.TipoVisual === 'nuevo') {
-            row.classList.add('nuevo-registro');
-        } else if (config.TipoVisual === 'editado') {
-            row.classList.add('registro-editado');
-        }
-        
-        // OPTIMIZACIÓN: Crear celdas una por una es más rápido que innerHTML para tablas grandes
-        const cells = [
-            config.HandoffValue,
-            config.ChannelId,
-            config.VirtualCC,
-            config.CampaignId,
-            config.WavyUser,
-            config.Reporte_Campana,
-            config.Reporte_Producto,
-            config.Reporte_Cod_Campana,
-            config.Peso,
-            config.Estado || 'Nuevo'
-        ];
-        
-        cells.forEach(text => {
-            const td = document.createElement('td');
-            td.textContent = text;
-            row.appendChild(td);
-        });
-        
-        // Última celda con botones de acción
-        const tdActions = document.createElement('td');
-        tdActions.innerHTML = `
-            <button class="edit-btn" data-index="${index}">✏️</button>
-            <button class="delete-btn" data-index="${index}">🗑️</button>
-        `;
-        row.appendChild(tdActions);
-        
-        fragment.appendChild(row);
-    });
-    
-    // Una sola operación DOM: limpiar y agregar todo de una vez
-    tbody.innerHTML = '';
-    tbody.appendChild(fragment);
-    
-    // Actualizar contadores
     const total = configuraciones.length;
+    
+    // Actualizar contadores SIEMPRE (no requiere renderizado)
     document.getElementById('totalCount').textContent = total;
     document.getElementById('totalRows').textContent = total;
     document.getElementById('visibleRows').textContent = total;
+    
+    // Si modo es 'ocultar', limpiar tabla y salir
+    if (modo === 'ocultar') {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--text-secondary);">📋 Tabla oculta para mejorar performance. Haz clic en "Mostrar Tabla" para visualizar.</td></tr>';
+        setTablaVisible(false);
+        return;
+    }
+    
+    // Si modo es 'todos', renderizar todo desde cero
+    if (modo === 'todos') {
+        tbody.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        
+        configuraciones.forEach((config, index) => {
+            const row = crearFila(config, index);
+            fragment.appendChild(row);
+        });
+        
+        tbody.appendChild(fragment);
+        setTablaVisible(true);
+        setUltimoIndiceRenderizado(total);
+        return;
+    }
+    
+    // Modo 'solo-nuevos': renderizar solo desde el último índice
+    const ultimoIndice = getUltimoIndiceRenderizado();
+    
+    if (ultimoIndice >= total) {
+        // No hay nuevos elementos
+        return;
+    }
+    
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = ultimoIndice; i < total; i++) {
+        const row = crearFila(configuraciones[i], i);
+        fragment.appendChild(row);
+    }
+    
+    tbody.appendChild(fragment);
+    setUltimoIndiceRenderizado(total);
+}
+
+// NUEVA FUNCIÓN: Crear una fila de la tabla (reutilizable)
+function crearFila(config, index) {
+    const row = document.createElement('tr');
+    
+    // Aplicar clases CSS según el tipo
+    if (config.TipoVisual === 'nuevo') {
+        row.classList.add('nuevo-registro');
+    } else if (config.TipoVisual === 'editado') {
+        row.classList.add('registro-editado');
+    }
+    
+    // Crear celdas
+    const cells = [
+        config.HandoffValue,
+        config.ChannelId,
+        config.VirtualCC,
+        config.CampaignId,
+        config.WavyUser,
+        config.Reporte_Campana,
+        config.Reporte_Producto,
+        config.Reporte_Cod_Campana,
+        config.Peso,
+        config.Estado || 'Nuevo'
+    ];
+    
+    cells.forEach(text => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        row.appendChild(td);
+    });
+    
+    // Última celda con botones de acción
+    const tdActions = document.createElement('td');
+    tdActions.innerHTML = `
+        <button class="edit-btn" data-index="${index}">✏️</button>
+        <button class="delete-btn" data-index="${index}">🗑️</button>
+    `;
+    row.appendChild(tdActions);
+    
+    return row;
+}
+
+// NUEVA FUNCIÓN: Alternar visibilidad de la tabla
+export function toggleTablaVisibilidad() {
+    const visible = isTablaVisible();
+    
+    if (visible) {
+        actualizarTabla('ocultar');
+        return false;
+    } else {
+        actualizarTabla('todos');
+        return true;
+    }
 }
 
 export function mostrarPopupEstadisticas(stats, numCanales) {

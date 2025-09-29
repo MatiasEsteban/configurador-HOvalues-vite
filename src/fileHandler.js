@@ -1,5 +1,5 @@
-// Manejo de carga de archivos
-import { setConfiguraciones, getConfiguraciones, setArchivoTemporal, getArchivoTemporal, clearArchivoTemporal } from './state.js';
+// Manejo de carga de archivos - OPTIMIZADO
+import { setConfiguraciones, getConfiguraciones, setArchivoTemporal, clearArchivoTemporal } from './state.js';
 import { showLoading, hideLoading, updateProgress, mostrarMensaje, actualizarTabla } from './ui.js';
 import { FILE_BATCH_SIZE } from './config.js';
 
@@ -50,7 +50,6 @@ function mostrarPopupConfirmacionCarga(file) {
         </div>
     `;
     
-    // CORREGIDO: Usar event listeners en lugar de onclick inline
     const confirmBtn = content.querySelector('.confirm-replace');
     const cancelBtn = content.querySelector('.cancel-load');
     
@@ -74,7 +73,6 @@ function mostrarPopupConfirmacionCarga(file) {
     setArchivoTemporal(file);
 }
 
-// CORREGIDO: Exportar esta función para poder usarla desde otros módulos si es necesario
 export async function procesarArchivo(file) {
     showLoading('Cargando archivo', 'Procesando datos...', true);
 
@@ -94,14 +92,17 @@ export async function procesarArchivo(file) {
             const valoresUnicos = new Set();
             const nuevasConfiguraciones = [];
             
+            // Actualizar progreso inicial
+            updateProgress(0);
+            
             // Procesar en lotes
             for (let i = 1; i < lines.length; i += FILE_BATCH_SIZE) {
                 const batch = lines.slice(i, i + FILE_BATCH_SIZE);
-                const progress = Math.round((i / lines.length) * 100);
+                const progress = Math.round(((i + batch.length) / lines.length) * 100);
                 updateProgress(progress);
                 
-                // Permitir que el navegador respire
-                await new Promise(resolve => setTimeout(resolve, 0));
+                // Permitir que el navegador respire y actualice el UI
+                await new Promise(resolve => setTimeout(resolve, 10));
                 
                 batch.forEach(line => {
                     const values = line.split(';');
@@ -131,7 +132,13 @@ export async function procesarArchivo(file) {
             });
             
             updateProgress(100);
-            actualizarTabla();
+            
+            // Pequeño delay para mostrar el 100%
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // ✅ Al cargar archivo, ocultar la tabla para mejor performance
+            // El usuario puede mostrarla con el botón si lo desea
+            actualizarTabla('ocultar');
             hideLoading();
             
             document.getElementById('fileStatus').innerHTML = 
