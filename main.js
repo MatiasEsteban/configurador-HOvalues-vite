@@ -1,5 +1,5 @@
-// Punto de entrada principal de la aplicación
-import { initTheme, toggleTheme, actualizarTabla, mostrarPopupNoEncontrado, toggleTablaVisibilidad } from './src/ui.js';
+// Punto de entrada principal de la aplicación - BÚSQUEDA CORREGIDA
+import { initTheme, toggleTheme, actualizarTabla, mostrarPopupNoEncontrado, toggleTablaVisibilidad, mostrarMensaje } from './src/ui.js';
 import { 
     agregarHandoff, 
     verificarExistencia,
@@ -144,18 +144,36 @@ function seleccionarTodosCanales() {
     }
 }
 
+// ✅ CORREGIDO: Búsqueda ahora busca en memoria antes de buscar en HTML
 function buscarHandoff() {
     const busqueda = prompt('Ingrese el HandoffValue a buscar:');
     if (!busqueda) return;
 
+    const searchLower = busqueda.toLowerCase();
+    
+    // PASO 1: Buscar primero en las configuraciones en memoria
+    const configuraciones = getConfiguraciones();
+    const resultadosEncontrados = configuraciones.filter(config => 
+        config.HandoffValue.toLowerCase().includes(searchLower)
+    );
+    
+    if (resultadosEncontrados.length === 0) {
+        // No se encontró nada en memoria
+        mostrarPopupNoEncontrado(busqueda);
+        return;
+    }
+    
+    // PASO 2: Si hay resultados, asegurarse de que la tabla esté completamente renderizada
+    actualizarTabla('todos');
+    
+    // PASO 3: Ahora filtrar visualmente las filas
     const tbody = document.getElementById('tableBody');
     const rows = tbody.getElementsByTagName('tr');
     let foundCount = 0;
-    const searchLower = busqueda.toLowerCase();
 
     for (let row of rows) {
         const handoffCell = row.cells[0];
-        if (handoffCell.textContent.toLowerCase().includes(searchLower)) {
+        if (handoffCell && handoffCell.textContent.toLowerCase().includes(searchLower)) {
             row.style.display = '';
             row.style.background = 'var(--warning-bg)';
             foundCount++;
@@ -165,28 +183,25 @@ function buscarHandoff() {
         }
     }
     
-    if (foundCount > 0) {
-        document.getElementById('visibleRows').textContent = foundCount;
-        
-        const statusDiv = document.getElementById('statusMessage');
-        statusDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span>🔍 Mostrando ${foundCount} resultado(s) para: "${busqueda}"</span>
-                <button id="clearSearchInline" style="padding: 5px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                    ❌ Ver todos
-                </button>
-            </div>
-        `;
-        statusDiv.className = 'status-message info';
-        
-        document.getElementById('clearSearchInline').addEventListener('click', limpiarBusqueda);
-    } else {
-        for (let row of rows) {
-            row.style.display = '';
-            row.style.background = '';
-        }
-        document.getElementById('visibleRows').textContent = rows.length;
-        mostrarPopupNoEncontrado(busqueda);
+    document.getElementById('visibleRows').textContent = foundCount;
+    
+    const statusDiv = document.getElementById('statusMessage');
+    statusDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🔍 Mostrando ${foundCount} resultado(s) para: "${busqueda}"</span>
+            <button id="clearSearchInline" style="padding: 5px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                ❌ Ver todos
+            </button>
+        </div>
+    `;
+    statusDiv.className = 'status-message info';
+    
+    document.getElementById('clearSearchInline').addEventListener('click', limpiarBusqueda);
+    
+    // PASO 4: Actualizar el botón de mostrar/ocultar tabla
+    const toggleBtn = document.getElementById('toggleTablaBtn');
+    if (toggleBtn) {
+        toggleBtn.innerHTML = '👁️ Ocultar Tabla';
     }
 }
 
@@ -194,6 +209,7 @@ function limpiarBusqueda() {
     const tbody = document.getElementById('tableBody');
     const rows = tbody.getElementsByTagName('tr');
     
+    // Restaurar visibilidad y estilo de todas las filas
     for (let row of rows) {
         row.style.display = '';
         row.style.background = '';
@@ -203,9 +219,13 @@ function limpiarBusqueda() {
     const configuraciones = getConfiguraciones();
     document.getElementById('visibleRows').textContent = configuraciones.length;
     
+    // Limpiar mensaje de estado
     const statusDiv = document.getElementById('statusMessage');
     statusDiv.className = 'status-message';
     statusDiv.innerHTML = '';
+    
+    // Mostrar mensaje informativo
+    mostrarMensaje('✅ Mostrando todos los registros', 'info');
 }
 
 function irAlFinal() {

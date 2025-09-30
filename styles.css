@@ -167,6 +167,11 @@ h1, h2, h3 {
     transition: color 0.3s ease;
 }
 
+small {
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+}
+
 h1 {
     margin-bottom: 30px;
     text-align: center;
