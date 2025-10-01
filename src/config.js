@@ -1,4 +1,6 @@
 // Configuraciones y constantes de la aplicación
+// Configuraciones y constantes de la aplicación
+// Configuraciones y constantes de la aplicación
 export const MAPEO_REPORTES = {
     'Portabilidad': 'Movil_Portabilidad',
     'Cambio de Plan': 'Movil_Cambio Plan',
@@ -6,7 +8,11 @@ export const MAPEO_REPORTES = {
     'Linea nueva con Factura': 'Movil_Linea Nueva',
     'Linea nueva Prepago': 'Movil_Linea Nueva Prepago',
     'Compra de Equipo': 'Movil_Cambio Equipo',
-    'Internet/TV': 'Fija_Alta'
+    'Internet/TV': 'Fija_Alta',
+    'Bienvenida CTW_Saliente': 'Generico_Bienvenida',
+    'Movistar Fibra': 'Fija_Fibra',
+    'Servicios Digitales': 'SSDD_Servicios_Digitales',
+    'Móviles y celulares': 'Movil_Moviles_celulares'
 };
 
 export const MAPEO_PRODUCTO = {
@@ -16,7 +22,11 @@ export const MAPEO_PRODUCTO = {
     'Movil_Linea Nueva': 'Movil',
     'Movil_Linea Nueva Prepago': 'Movil',
     'Movil_Cambio Equipo': 'Movil',
-    'Fija_Alta': 'Fijo'
+    'Fija_Alta': 'Fijo',
+    'Generico_Bienvenida': 'Generico',
+    'Fija_Fibra': 'Fija',
+    'SSDD_Servicios_Digitales': 'SSDD',
+    'Movil_Moviles_celulares': 'Movil'
 };
 
 export const BATCH_SIZE = 100;

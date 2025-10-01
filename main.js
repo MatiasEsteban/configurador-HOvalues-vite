@@ -128,7 +128,7 @@ function sincronizarWavyUser() {
 function seleccionarTodosCanales() {
     const allChannels = document.querySelectorAll('.channel-option');
     const selectedChannels = getSelectedChannels();
-    const allSelected = selectedChannels.length === 4;
+    const allSelected = selectedChannels.length === 5;
     
     if (allSelected) {
         allChannels.forEach(option => {
