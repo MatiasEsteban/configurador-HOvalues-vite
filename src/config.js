@@ -1,6 +1,6 @@
+// src/config.js
 // Configuraciones y constantes de la aplicación
-// Configuraciones y constantes de la aplicación
-// Configuraciones y constantes de la aplicación
+
 export const MAPEO_REPORTES = {
     'Portabilidad': 'Movil_Portabilidad',
     'Cambio de Plan': 'Movil_Cambio Plan',
@@ -29,7 +29,9 @@ export const MAPEO_PRODUCTO = {
     'Movil_Moviles_celulares': 'Movil'
 };
 
-export const BATCH_SIZE = 100;
-export const FILE_BATCH_SIZE = 200;
+// Constantes de performance
+export const BATCH_SIZE = 100; // Para procesamiento de lógica
+export const FILE_BATCH_SIZE = 200; // Para carga de archivo
 export const LOADING_THRESHOLD = 50;
 export const LARGE_FILE_THRESHOLD = 1000;
+export const FILAS_POR_PAGINA = 100; // ✅ NUEVO: Para paginación

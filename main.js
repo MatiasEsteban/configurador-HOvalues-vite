@@ -1,5 +1,9 @@
-// Punto de entrada principal de la aplicación - BÚSQUEDA CORREGIDA
-import { initTheme, toggleTheme, actualizarTabla, mostrarPopupNoEncontrado, toggleTablaVisibilidad, mostrarMensaje } from './src/ui.js';
+// main.js
+// Punto de entrada principal - OPTIMIZADO y MODULARIZADO
+
+import { initTheme, toggleTheme } from './src/ui/theme.js';
+import { renderizarPagina } from './src/ui/tableRenderer.js';
+import { mostrarMensaje, mostrarPopupNoEncontrado } from './src/ui/messaging.js';
 import { 
     agregarHandoff, 
     verificarExistencia,
@@ -12,25 +16,32 @@ import {
     limpiarTodo
 } from './src/dataManager.js';
 import { cargarArchivoBase } from './src/fileHandler.js';
-import { getConfiguraciones, addSelectedChannel, removeSelectedChannel, clearSelectedChannels, getSelectedChannels } from './src/state.js';
+import { 
+    getConfiguraciones, 
+    addSelectedChannel, 
+    removeSelectedChannel, 
+    clearSelectedChannels, 
+    getSelectedChannels,
+    setDatosFiltrados,
+    setEsBusqueda,
+    setPaginaActual,
+    getPaginaActual,
+    actualizarPaginacion
+} from './src/state.js';
 
-// Inicialización cuando el DOM está listo
+// Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tema
     initTheme();
-    
-    // Inicializar tabla en modo oculto
-    actualizarTabla('ocultar');
-    
-    // Event listeners principales
     setupEventListeners();
+    actualizarPaginacion(); // Calcular paginación inicial (Pág 1 de 1)
+    renderizarPagina();   // Renderizar estado inicial (vacío)
 });
 
 function setupEventListeners() {
-    // Toggle tema
+    // Tema
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     
-    // Carga de archivo
+    // Archivo
     document.getElementById('fileUpload').addEventListener('change', cargarArchivoBase);
     
     // Modo de entrada
@@ -38,205 +49,144 @@ function setupEventListeners() {
         radio.addEventListener('change', cambiarModoEntrada);
     });
     
-    // Verificar existencia
+    // Formulario
     document.getElementById('handoffValue').addEventListener('blur', verificarExistencia);
-    
-    // Sincronizar Campaign ID con Wavy User
     document.getElementById('campaignId').addEventListener('change', sincronizarWavyUser);
     document.getElementById('syncWavyUser').addEventListener('click', sincronizarWavyUser);
-    
-    // Sincronizar reporte
     document.getElementById('reporteCampana').addEventListener('change', sincronizarReporteCodigo);
     
-    // Selección de canales
+    // Canales
     document.querySelectorAll('.channel-option').forEach(option => {
-        option.addEventListener('click', function() {
-            this.classList.toggle('selected');
-            const channel = this.dataset.channel;
-            
-            if (this.classList.contains('selected')) {
-                addSelectedChannel(channel);
-            } else {
-                removeSelectedChannel(channel);
-            }
-        });
+        option.addEventListener('click', toggleChannelSelection);
     });
-    
-    // Botón seleccionar todos los canales
     document.getElementById('selectAllChannels').addEventListener('click', seleccionarTodosCanales);
     
-    // Botones de acción principal
+    // Botones Acción Formulario
     document.getElementById('addHandoffBtn').addEventListener('click', agregarHandoff);
     document.getElementById('clearFormBtn').addEventListener('click', limpiarFormulario);
-    document.getElementById('searchBtn').addEventListener('click', buscarHandoff);
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        // Botón "Cargar Configuración" (antes "Buscar")
+        const hoValue = document.getElementById('handoffValue').value;
+        if (hoValue) {
+            cargarConfiguracionExistente(hoValue);
+        } else {
+            mostrarMensaje('Ingrese un HandoffValue para cargar', 'info');
+        }
+    });
     
-    // Botones de búsqueda en tabla
+    // Botones Búsqueda en Tabla
     document.getElementById('searchHandoffBtn').addEventListener('click', buscarHandoff);
     document.getElementById('clearSearchBtn').addEventListener('click', limpiarBusqueda);
     
-    // Botones de tabla
+    // Botones Paginación
+    document.getElementById('prevPageBtn').addEventListener('click', irPaginaAnterior);
+    document.getElementById('nextPageBtn').addEventListener('click', irPaginaSiguiente);
+    
+    // Botones Acción Tabla
     document.getElementById('exportCSVBtn').addEventListener('click', exportarCSV);
     document.getElementById('clearAllBtn').addEventListener('click', limpiarTodo);
-    document.getElementById('scrollToBottomBtn').addEventListener('click', irAlFinal);
     
-    // Botón para mostrar/ocultar tabla
-    document.getElementById('toggleTablaBtn').addEventListener('click', function() {
-        const estaVisible = toggleTablaVisibilidad();
-        this.innerHTML = estaVisible ? '👁️ Ocultar Tabla' : '👁️ Mostrar Tabla';
-    });
-    
-    // Event delegation para botones dinámicos de la tabla
-    document.getElementById('tableBody').addEventListener('click', function(e) {
+    // Event delegation para botones dinámicos (Tabla y Popups)
+    document.body.addEventListener('click', function(e) {
         if (e.target.classList.contains('edit-btn')) {
             const index = parseInt(e.target.dataset.index);
             editarFila(index);
         } else if (e.target.classList.contains('delete-btn')) {
             const index = parseInt(e.target.dataset.index);
             eliminarFila(index);
-        }
-    });
-    
-    // Event delegation global para botones dinámicos (load-config-btn)
-    // OPTIMIZADO: Solo se agrega UNA VEZ
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('load-config-btn')) {
+        } else if (e.target.classList.contains('load-config-btn')) {
             const handoffValue = e.target.dataset.handoff;
+            document.getElementById('handoffValue').value = handoffValue;
             cargarConfiguracionExistente(handoffValue);
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
     });
 }
+
+// --- Lógica de Eventos ---
 
 function cambiarModoEntrada() {
     const mode = document.querySelector('input[name="inputMode"]:checked').value;
-    const singleInput = document.getElementById('singleInput');
-    const multipleInput = document.getElementById('multipleInput');
-    
-    if (mode === 'single') {
-        singleInput.style.display = 'block';
-        multipleInput.style.display = 'none';
-    } else {
-        singleInput.style.display = 'none';
-        multipleInput.style.display = 'block';
-    }
+    document.getElementById('singleInput').style.display = (mode === 'single') ? 'block' : 'none';
+    document.getElementById('multipleInput').style.display = (mode === 'multiple') ? 'block' : 'none';
 }
 
 function sincronizarWavyUser() {
-    const campaignId = document.getElementById('campaignId').value;
-    document.getElementById('wavyUser').value = campaignId;
+    document.getElementById('wavyUser').value = document.getElementById('campaignId').value;
+}
+
+function toggleChannelSelection() {
+    this.classList.toggle('selected');
+    const channel = this.dataset.channel;
+    if (this.classList.contains('selected')) {
+        addSelectedChannel(channel);
+    } else {
+        removeSelectedChannel(channel);
+    }
 }
 
 function seleccionarTodosCanales() {
     const allChannels = document.querySelectorAll('.channel-option');
-    const selectedChannels = getSelectedChannels();
-    const allSelected = selectedChannels.length === 5;
+    const totalCanales = allChannels.length;
+    const allSelected = getSelectedChannels().length === totalCanales;
     
-    if (allSelected) {
-        allChannels.forEach(option => {
+    clearSelectedChannels();
+    allChannels.forEach(option => {
+        if (allSelected) {
             option.classList.remove('selected');
-        });
-        clearSelectedChannels();
-    } else {
-        clearSelectedChannels();
-        allChannels.forEach(option => {
+        } else {
             option.classList.add('selected');
             addSelectedChannel(option.dataset.channel);
-        });
-    }
+        }
+    });
 }
 
-// ✅ CORREGIDO: Búsqueda ahora busca en memoria antes de buscar en HTML
+// ✅ NUEVO: Búsqueda en memoria (estado)
 function buscarHandoff() {
     const busqueda = prompt('Ingrese el HandoffValue a buscar:');
     if (!busqueda) return;
 
     const searchLower = busqueda.toLowerCase();
     
-    // PASO 1: Buscar primero en las configuraciones en memoria
+    // PASO 1: Buscar en memoria (O(N) pero solo en memoria)
     const configuraciones = getConfiguraciones();
-    const resultadosEncontrados = configuraciones.filter(config => 
+    const resultados = configuraciones.filter(config => 
         config.HandoffValue.toLowerCase().includes(searchLower)
     );
     
-    if (resultadosEncontrados.length === 0) {
-        // No se encontró nada en memoria
+    if (resultados.length === 0) {
         mostrarPopupNoEncontrado(busqueda);
         return;
     }
     
-    // PASO 2: Si hay resultados, asegurarse de que la tabla esté completamente renderizada
-    actualizarTabla('todos');
+    // PASO 2: Guardar estado de búsqueda
+    setEsBusqueda(true);
+    setDatosFiltrados(resultados); // Esto recalcula paginación y resetea a pág 1
     
-    // PASO 3: Ahora filtrar visualmente las filas
-    const tbody = document.getElementById('tableBody');
-    const rows = tbody.getElementsByTagName('tr');
-    let foundCount = 0;
-
-    for (let row of rows) {
-        const handoffCell = row.cells[0];
-        if (handoffCell && handoffCell.textContent.toLowerCase().includes(searchLower)) {
-            row.style.display = '';
-            row.style.background = 'var(--warning-bg)';
-            foundCount++;
-        } else {
-            row.style.display = 'none';
-            row.style.background = '';
-        }
-    }
+    // PASO 3: Renderizar la PÁGINA 1 de los resultados
+    renderizarPagina();
     
-    document.getElementById('visibleRows').textContent = foundCount;
-    
-    const statusDiv = document.getElementById('statusMessage');
-    statusDiv.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🔍 Mostrando ${foundCount} resultado(s) para: "${busqueda}"</span>
-            <button id="clearSearchInline" style="padding: 5px 15px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                ❌ Ver todos
-            </button>
-        </div>
-    `;
-    statusDiv.className = 'status-message info';
-    
-    document.getElementById('clearSearchInline').addEventListener('click', limpiarBusqueda);
-    
-    // PASO 4: Actualizar el botón de mostrar/ocultar tabla
-    const toggleBtn = document.getElementById('toggleTablaBtn');
-    if (toggleBtn) {
-        toggleBtn.innerHTML = '👁️ Ocultar Tabla';
-    }
+    mostrarMensaje(`🔍 Encontrados ${resultados.length} registros para "${busqueda}"`, 'info');
 }
 
+// ✅ NUEVO: Limpiar búsqueda
 function limpiarBusqueda() {
-    const tbody = document.getElementById('tableBody');
-    const rows = tbody.getElementsByTagName('tr');
+    setEsBusqueda(false);
+    setDatosFiltrados([]); // Limpiar datos filtrados
     
-    // Restaurar visibilidad y estilo de todas las filas
-    for (let row of rows) {
-        row.style.display = '';
-        row.style.background = '';
-        row.classList.remove('hidden');
-    }
+    // Renderizar la PÁGINA 1 de los datos originales
+    renderizarPagina();
     
-    const configuraciones = getConfiguraciones();
-    document.getElementById('visibleRows').textContent = configuraciones.length;
-    
-    // Limpiar mensaje de estado
-    const statusDiv = document.getElementById('statusMessage');
-    statusDiv.className = 'status-message';
-    statusDiv.innerHTML = '';
-    
-    // Mostrar mensaje informativo
     mostrarMensaje('✅ Mostrando todos los registros', 'info');
 }
 
-function irAlFinal() {
-    const dataTable = document.querySelector('.data-table');
-    if (dataTable) {
-        dataTable.scrollTop = dataTable.scrollHeight;
-        const statusDiv = document.getElementById('statusMessage');
-        statusDiv.textContent = '➡️ Mostrando final de la lista';
-        statusDiv.className = 'status-message info';
-        setTimeout(() => {
-            statusDiv.className = 'status-message';
-        }, 2000);
-    }
+// ✅ NUEVO: Controles de paginación
+function irPaginaAnterior() {
+    setPaginaActual(getPaginaActual() - 1);
+    renderizarPagina();
+}
+
+function irPaginaSiguiente() {
+    setPaginaActual(getPaginaActual() + 1);
+    renderizarPagina();
 }

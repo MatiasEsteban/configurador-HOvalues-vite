@@ -1,0 +1,123 @@
+/* src/css/table.css */
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.table-info {
+    padding: 10px;
+    background: var(--hover-bg);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.data-table {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px; /* Aumentado para paginación */
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+
+th {
+    background: var(--hover-bg);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+th:last-child, td:last-child {
+    position: sticky;
+    right: 0;
+    background: var(--card-bg);
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    z-index: 5;
+}
+
+/* Transición suave para hover */
+tr {
+    transition: background-color 0.2s ease;
+}
+
+tr:hover {
+    background: var(--hover-bg);
+}
+
+/* Clases de estado de fila */
+tr.nuevo-registro {
+    background: rgba(40, 167, 69, 0.1) !important;
+}
+tr.nuevo-registro:hover {
+    background: rgba(40, 167, 69, 0.2) !important;
+}
+
+tr.registro-editado {
+    background: rgba(255, 193, 7, 0.1) !important;
+}
+tr.registro-editado:hover {
+    background: rgba(255, 193, 7, 0.2) !important;
+}
+
+tr.highlight-search {
+    background: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
+}
+tr.highlight-search td {
+    color: var(--warning-text) !important;
+}
+
+.edit-btn, .delete-btn {
+    padding: 5px 10px;
+    font-size: 14px;
+    margin: 0 2px;
+}
+
+.edit-btn {
+    background: #ffc107;
+    color: #333;
+}
+
+.delete-btn {
+    background: #dc3545;
+}
+
+/* Controles de paginación */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+}
+
+.pagination-controls span {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.pagination-controls button {
+    padding: 8px 20px;
+    font-size: 14px;
+}

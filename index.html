@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurador de Intents v4.0</title>
+    <title>Configurador de Intents v4.0 (Optimizado)</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
@@ -19,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Botón de cambio de tema -->
     <div class="theme-toggle" id="themeToggle">
         <span id="themeIcon">🌙</span>
         <span id="themeText">Modo Oscuro</span>
@@ -29,7 +27,6 @@
         <div class="card">
             <h1>🚀 Configurador de Intents v4.0</h1>
             
-            <!-- Carga de archivo -->
             <div class="file-upload">
                 <label for="fileUpload">📁 Cargar archivo base (opcional):</label>
                 <input type="file" id="fileUpload" accept=".csv">
@@ -37,7 +34,6 @@
                 <div id="fileStatus"></div>
             </div>
 
-            <!-- Selector de modo -->
             <div class="input-mode-selector">
                 <div class="mode-option">
                     <input type="radio" id="singleMode" name="inputMode" value="single" checked>
@@ -49,14 +45,12 @@
                 </div>
             </div>
 
-            <!-- Entrada individual -->
             <div id="singleInput" class="form-group">
                 <label for="handoffValue">HandoffValue:</label>
                 <input type="text" id="handoffValue" placeholder="Ingrese el HandoffValue">
                 <div class="helper-text" id="existenceCheck"></div>
             </div>
 
-            <!-- Entrada múltiple -->
             <div id="multipleInput" class="form-group" style="display:none;">
                 <label for="handoffValues">HandoffValues (uno por línea o separados por coma):</label>
                 <textarea id="handoffValues" placeholder="Ejemplo:&#10;valor1&#10;valor2&#10;valor3"></textarea>
@@ -78,7 +72,6 @@
                         <span class="sync-icon" id="syncWavyUser" title="Sincronizar">🔄</span>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="wavyUser">Wavy User:</label>
                     <select id="wavyUser">
@@ -91,13 +84,11 @@
                         <option value="WAP_B2B_Kon-AR">WAP_B2B_Kon-AR</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="virtualCC">Virtual CC:</label>
                     <input type="text" id="virtualCC" value="ventas">
                 </div>
             </div>
-
             <div class="categorization-group">
                 <h3>📊 Categorización</h3>
                 <div class="form-row">
@@ -118,7 +109,6 @@
                             <option value="Móviles y celulares">Móviles y celulares</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="reporteCodCampana">Reporte Código Campaña:</label>
                         <select id="reporteCodCampana">
@@ -136,7 +126,6 @@
                             <option value="Movil_Moviles_celulares">Movil_Moviles_celulares</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="reporteProducto">Reporte Producto:</label>
                         <select id="reporteProducto">
@@ -150,7 +139,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Canal (ChannelId):</label>
                 <button class="select-all-btn" id="selectAllChannels">✅ Seleccionar Todos</button>
@@ -162,16 +150,14 @@
                     <div class="channel-option" data-channel="wapp_b2b_sales">🏢 wapp_b2b_sales</div>
                 </div>
             </div>
-
             <div class="form-group">
                 <label for="peso">Peso:</label>
                 <input type="number" id="peso" value="100" min="0" max="100" style="max-width: 100px;">
             </div>
-
             <div class="button-group">
                 <button id="addHandoffBtn">➕ Agregar HandoffValue(s)</button>
                 <button class="secondary" id="clearFormBtn">🔄 Limpiar</button>
-                <button class="info" id="searchBtn">🔎 Buscar</button>
+                <button class="info" id="searchBtn">🔎 Cargar Configuración</button>
             </div>
 
             <div id="statusMessage" class="status-message"></div>
@@ -180,25 +166,20 @@
         <div class="card">
             <h2>📋 HandoffValues Configurados (<span id="totalCount">0</span>)</h2>
             
-            <!-- Buscador -->
             <div class="search-box">
                 <button class="info" id="searchHandoffBtn" style="padding: 10px 30px;">🔎 Buscar HandoffValue</button>
                 <button class="secondary" id="clearSearchBtn" style="padding: 10px 20px;">❌ Limpiar búsqueda</button>
             </div>
             
             <div class="table-info">
-                <span>Total: <span id="totalRows">0</span> | Visibles: <span id="visibleRows">0</span></span>
-                <span>💡 Los nuevos registros se muestran automáticamente</span>
+                <span>Total: <span id="totalRows">0</span> | Mostrando: <span id="visibleRows">0</span></span>
+                <span id="searchStatus" style="color: var(--warning-text);"></span>
             </div>
             
-            <!-- Botón para mostrar/ocultar toda la tabla -->
-            <div class="performance-controls">
-                <button class="warning" id="toggleTablaBtn" style="width: 100%; margin-bottom: 15px; font-size: 16px;">
-                    👁️ Mostrar Tabla
-                </button>
-                <small style="color: var(--text-secondary); display: block; text-align: center; margin-bottom: 10px;">
-                    ⚡ Por defecto solo se muestran los registros nuevos para optimizar performance
-                </small>
+            <div class="pagination-controls" id="paginationControls">
+                <button id="prevPageBtn" class="secondary" disabled>⬅️ Anterior</button>
+                <span id="pageInfo">Página 0 de 0</span>
+                <button id="nextPageBtn" class="secondary" disabled>Siguiente ➡️</button>
             </div>
             
             <div class="data-table">
@@ -218,14 +199,19 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody"></tbody>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                Cargue un archivo base para comenzar.
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             
             <div class="button-group">
                 <button class="export-btn" id="exportCSVBtn">📥 Exportar CSV</button>
                 <button class="danger" id="clearAllBtn">🗑️ Limpiar Todo</button>
-                <button class="info" id="scrollToBottomBtn" style="background: #6c757d;">⬇️ Ir al final</button>
             </div>
         </div>
     </div>
