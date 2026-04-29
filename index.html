@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurador de Intents v4.0 (Optimizado)</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
@@ -26,7 +28,7 @@
     <div class="container">
         <div class="card">
             <h1>🚀 Configurador de Intents v4.0</h1>
-            
+
             <div class="file-upload">
                 <label for="fileUpload">📁 Cargar archivo base (opcional):</label>
                 <input type="file" id="fileUpload" accept=".csv">
@@ -66,6 +68,7 @@
                             <option value="WAP_Desarrollo_Kon-AR">WAP_Desarrollo_Kon-AR</option>
                             <option value="WAP_Prepago_Kon-AR">WAP_Prepago_Kon-AR</option>
                             <option value="WAP_Hogar_Kon-AR">WAP_Hogar_Kon-AR</option>
+                            <option value="WAP_Hogar_In_Kon-AR">WAP_Hogar_In_Kon-AR</option>
                             <option value="WAP_Movil_In_Kon-AR">WAP_Movil_In_Kon-AR</option>
                             <option value="WAP_B2B_Kon-AR">WAP_B2B_Kon-AR</option>
                         </select>
@@ -165,23 +168,23 @@
 
         <div class="card">
             <h2>📋 HandoffValues Configurados (<span id="totalCount">0</span>)</h2>
-            
+
             <div class="search-box">
                 <button class="info" id="searchHandoffBtn" style="padding: 10px 30px;">🔎 Buscar HandoffValue</button>
                 <button class="secondary" id="clearSearchBtn" style="padding: 10px 20px;">❌ Limpiar búsqueda</button>
             </div>
-            
+
             <div class="table-info">
                 <span>Total: <span id="totalRows">0</span> | Mostrando: <span id="visibleRows">0</span></span>
                 <span id="searchStatus" style="color: var(--warning-text);"></span>
             </div>
-            
+
             <div class="pagination-controls" id="paginationControls">
                 <button id="prevPageBtn" class="secondary" disabled>⬅️ Anterior</button>
                 <span id="pageInfo">Página 0 de 0</span>
                 <button id="nextPageBtn" class="secondary" disabled>Siguiente ➡️</button>
             </div>
-            
+
             <div class="data-table">
                 <table>
                     <thead>
@@ -208,7 +211,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <div class="button-group">
                 <button class="export-btn" id="exportCSVBtn">📥 Exportar CSV</button>
                 <button class="danger" id="clearAllBtn">🗑️ Limpiar Todo</button>
@@ -218,4 +221,5 @@
 
     <script type="module" src="./main.js"></script>
 </body>
+
 </html>
